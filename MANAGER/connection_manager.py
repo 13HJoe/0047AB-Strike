@@ -4,6 +4,7 @@ import time
 import json
 import base64
 import requests
+from queue import Queue
 
 class Con_Stor():
     def __init__(self, client_socket_object, addr):
@@ -48,6 +49,8 @@ class Con_Stor():
 
 ACTIVE_CONNECTIONS = []
 
+RESPONSE_DIRECTORY = {}
+
 class Server:
     def __init__(self, ip, port, django_server):
         self.socket_obj = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -91,7 +94,7 @@ def execute_command(id, command):
 
     if command[0] == "exit":
         ACTIVE_CONNECTIONS.pop(id-1)
-        return "Closed Connection"
+        RESPONSE_DIRECTORY[id] = "Closed Connection"
 
     if command[0] == "upload":
         filename = command[1]
