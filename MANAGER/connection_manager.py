@@ -9,7 +9,7 @@ class Con_Stor():
     def __init__(self, client_socket_object, addr):
         self.client_socket_object = client_socket_object
         self.addr = addr
-        self.machine_info = self.json_receive()
+        self.machine_info = client_socket_object.recv(1024).decode('ascii')
 
     def json_send(self, data):
         for i in range(len(data)):
@@ -53,7 +53,7 @@ class Server:
             return "[+] ERROR - Error during creating a file"    
         
     def manage_listen_and_add(self):
-        print("[*] Listening for Incoming Connections")
+        #print("[*] Listening for Incoming Connections")
         self.socket_obj.listen(5)
         
         try:
@@ -63,11 +63,12 @@ class Server:
                                     addr=addr)
                 ACTIVE_CONNECTIONS.append(con_stor)
 
-                print("[+] Received a connection from -> ", str(addr))
+                #print("[+] Received a connection from -> ", str(addr))
                 print(con_stor.machine_info)
             
         except KeyboardInterrupt:
-            print("[*] Closing Listener")
+            #print("[*] Closing Listener")
+            pass
 
 
     def manage_POST_connection_objects(self):
@@ -81,13 +82,18 @@ class Server:
                                 data=data)
                 time.sleep(10)    
         except KeyboardInterrupt:
-            print("[*] Closing POST func()")
+            #print("[*] Closing POST func()")
+            pass
         
 def run_manager(ip, port, django_server):
     obj = Server(ip=ip, port=port,
                  django_server=django_server)
+    print(ip,port,django_server)
+    obj.manage_listen_and_add()
+    time.sleep(1)
+    obj.socket_obj.close()
     
-    listen_thread = threading.Thread(target=obj.manage_listen_and_add, daemon=True)
+'''    listen_thread = threading.Thread(target=obj.manage_listen_and_add, daemon=True)
     command_thead = threading.Thread(target=obj.manage_POST_connection_objects, daemon=True)
 
     listen_thread.start()
@@ -95,8 +101,8 @@ def run_manager(ip, port, django_server):
 
     listen_thread.join()
     command_thead.join()
-
-    obj.socket_obj.close()
+'''
+    
 
 
     
