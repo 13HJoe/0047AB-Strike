@@ -34,13 +34,14 @@ def exec_conn():
         connection_id = int(request.form.get("id"))
         command = request.form.get("command")
 
-        execute_command_thread = threading.Thread(target=connection_manager.execute_command, args=(id, command))
+        response = connection_manager.execute_command(id=connection_id, command=command)
+        """        
+        execute_command_thread = threading.Thread(target=connection_manager.execute_command, args=(connection_id, command))
         execute_command_thread.start()
         execute_command_thread.join()
 
         response = connection_manager.RESPONSE_DIRECTORY[connection_id]
-        del connection_manager.RESPONSE_DIRECTORY[connection_id]
-
+        """
         return make_response(render_template("data.html", data=response), 200)
 
 

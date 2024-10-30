@@ -34,7 +34,7 @@ class Con_Stor():
                 data[i] = word.decode('utf-8')
         
         json_data = json.dumps(data).encode('utf-8')
-        self.client_socket_object.send(data)
+        self.client_socket_object.send(json_data)
 
     def json_receive(self):
         json_data = "" 
@@ -94,7 +94,9 @@ def execute_command(id, command):
 
     if command[0] == "exit":
         ACTIVE_CONNECTIONS.pop(id-1)
-        RESPONSE_DIRECTORY[id] = "Closed Connection"
+        #RESPONSE_DIRECTORY[id] = "Closed Connection"
+        return "Closed Connection"
+
 
     if command[0] == "upload":
         filename = command[1]
@@ -108,9 +110,11 @@ def execute_command(id, command):
         data = response
         filename = command[1].split('/')[-1]
         obj.write_file(filename, response)
-        return "File Downloaded"
-    
-    return response
+        #RESPONSE_DIRECTORY[id] =  "File Downloaded"
+        return "Closed Connection"
+    else:
+        #RESPONSE_DIRECTORY[id] = response
+        return response
 
 def run_manager(ip, port, django_server):
     obj = Server(ip=ip, port=port,
