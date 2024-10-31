@@ -7,7 +7,7 @@ import threading
 import time
 
 app = Flask(__name__)
-
+manager_thread = None
 @app.route("/init", methods=["POST"])
 def init():
     if request.method == "POST":
@@ -17,15 +17,18 @@ def init():
         manager_thread = threading.Thread(target=connection_manager.run_manager, args=(ip, port, django_server),daemon=True)
         manager_thread.start()
         manager_thread.join()
-
         return make_response(render_template("init.html"), 200)
+        
+
+        
 
 @app.route("/all_conn", methods=["GET"])
 def get_conn():
     data = []
     for conn in connection_manager.ACTIVE_CONNECTIONS:
-        data.append(str(conn.addr[0])+str(conn.machine_info))
-    print(data)
+        temp = str(conn.addr[0])+str(conn.machine_info)
+        temp.replace('\n','<br>')
+        data.append(temp)
     return render_template("data.html", data=data)
 
 @app.route("/exec_conn", methods=["POST"])
@@ -54,10 +57,3 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     flask_thread.join()
-    try:
-        while True:
-            pass
-    except KeyboardInterrupt:
-        exit()
-
-    

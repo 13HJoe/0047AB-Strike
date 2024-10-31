@@ -10,7 +10,7 @@ class Con_Stor():
     def __init__(self, client_socket_object, addr):
         self.client_socket_object = client_socket_object
         self.addr = addr
-        self.machine_info = client_socket_object.recv(1024).decode('ascii')
+        self.machine_info = str(client_socket_object.recv(1024).decode('ascii'))
 
     def read_file(self, path):
         try:
