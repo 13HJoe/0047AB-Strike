@@ -4,9 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>0047AB Strike</title>
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <script src="../../static/js/source.js"></script>
 </head>
 <body>
-    Welcome {{user}}
-    <a href="/logout">Logout</a>
+  <!--HEADER-->
+  <div class="navbar">
+    <img src="../../static/images/logo.png" height="120" width="340">
+    <div class="dropdown">
+      <button class="dropbtn">Actions
+        <i class="fa fa-caret-down"></i>
+      </button>
+      <div class="dropdown-content">
+        <a href="#">Connection Metrics</a>
+        <a href="#">Configuration</a>
+        <a href="/logout">Log Out</a>
+      </div>
+    </div>
+  </div>
+
+  <!--BODY-->
+  <div id="not-header"> 
+    <div id="container">
+      <div class="card">
+        <div class="ip">192.168.1.1</div>
+        <hr>
+        <div class="status"><b>Status</b>: Inactive</div>
+        <hr>
+        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
+        <button class="interact">Interact</div>
+      </div>
+  </div>
 </body>
 </html>
