@@ -4,14 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Log In</title>
+    <link rel="stylesheet" href="../../static/css/style.css">
+    <script src="../../static/js/source.js"></script>
 </head>
 <body>
-    <form method="post">
-        {% csrf_token %}
-        <input type="text" name="username" placeholder="User Name">
-        <input type="password" name="password" placeholder="Password">
-        <button type="submit">Log In</button>
-    </form>
-    <p>{{ message }}</p>
+  <!--HEADER-->
+  <div class="navbar">
+    <img src="../../static/images/logo.png" height="120" width="340">
+  </div>
+
+    <!--BODY-->
+    <div id="not-header"> 
+        <div id="container">
+          <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                <input class="input" type="text" name="username" placeholder="User Name"><br>
+                <input class="input" type="password" name="password" placeholder="Password"><br>
+                <hr>
+                <button id="login_button" type="submit">Log In</button>
+            </form>        
+          </div>
+      </div>
+    
 </body>
 </html>

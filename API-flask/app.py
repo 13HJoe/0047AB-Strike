@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import request, make_response, render_template
+from flask_cors import CORS
 
 import connection_manager
 
@@ -7,21 +8,19 @@ import threading
 import time
 
 app = Flask(__name__)
+CORS(app, origins=["http://127.0.0.1:8000/"])
 manager_thread = None
-@app.route("/init", methods=["POST"])
+
+@app.route("/init", methods=["GET"])
 def init():
-    if request.method == "POST":
-        ip = request.form.get("ip")
-        port = int(request.form.get("port"))
-        django_server = request.form.get("django-server")
+    if request.method == "GET":
+        ip = request.args.get("ip")
+        port = int(request.args.get("port"))
+        django_server = request.args.get("django-server")
         manager_thread = threading.Thread(target=connection_manager.run_manager, args=(ip, port, django_server),daemon=True)
         manager_thread.start()
-        manager_thread.join()
         return make_response(render_template("init.html"), 200)
-        
-
-        
-
+       
 @app.route("/all_conn", methods=["GET"])
 def get_conn():
     data = []
@@ -45,9 +44,6 @@ def exec_conn():
         """
         return make_response(render_template("data.html", data=response), 200)
 
-
-
-
 def run_flask():
     app.run(debug=True, use_reloader=False,host="127.0.0.1", port=5000)
 
@@ -55,3 +51,5 @@ if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
     flask_thread.join()
+    if manager_thread:
+        manager_thread.join()

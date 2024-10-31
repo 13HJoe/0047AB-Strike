@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form method="post" action="/initialize_manager">
+        {% csrf_token %}
+        <input type="text" name="ip_addr" placeholder="ip">
+        <input type="text" name="port" placeholder="port">
+        <input type="text" name="flask_server" placeholder="Flask Server">
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>

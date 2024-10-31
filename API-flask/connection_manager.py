@@ -126,8 +126,6 @@ def run_manager(ip, port, django_server):
     listen_thread.start()
     command_thead.start()
 
-    time.sleep(1)
-    
     listen_thread.join()
     command_thead.join()
 
