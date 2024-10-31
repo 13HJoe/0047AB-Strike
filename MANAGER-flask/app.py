@@ -26,9 +26,7 @@ def init():
 def get_conn():
     data = []
     for conn in connection_manager.ACTIVE_CONNECTIONS:
-        temp = str(conn.addr[0])+str(conn.machine_info)
-        temp.replace('\n','<br>')
-        data.append(temp)
+        data.append(str(conn.addr[0])+conn.machine_info)
     return render_template("data.html", data=data)
 
 @app.route("/exec_conn", methods=["POST"])
