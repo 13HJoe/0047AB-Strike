@@ -1,7 +1,11 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.csrf import csrf_exempt
 import requests
+import json
+
+from .models import *
 
 # Create your views here.
 def index(request):
@@ -41,12 +45,14 @@ def initialize_manager(request):
         ip = request.POST["ip_addr"]
         port = request.POST["port"]
         flask_server = request.POST["flask_server"]
+        request.session['FLASK_SERVER'] = flask_server
+        
         flask_server+="/init"
-        django_server = "http://127.0.0.1:8000/update_data"
+        django_server = "http://127.0.0.1:8000/"
 
         data = {"ip":ip,
                 "port":port,
-                "django_server":django_server}
+                "django-server":django_server}
         
         response = requests.get(url=flask_server, params=data)
 
@@ -55,8 +61,24 @@ def initialize_manager(request):
 
     if request.method == "GET":
         return render(request, "UI/initialize_manager.html")
-    
-def update_data(request):
+
+@csrf_exempt
+def update_conn(request):
     if request.method == "POST":
-        data = request.POST.items()
-        # update DB
+        data = json.loads(request.body)
+        print(data)
+        print("POST check")
+        return HttpResponse("Data Received")
+
+def refresh_conn(request):
+    if request.method == "GET":
+
+        if not request.session['FLASK_SERVER']:
+            return HttpResponse("Flask API/Manager not initialized")
+        
+        url = request.session['FLASK_SERVER'] + "/conn_all"
+        json_data = requests.get(url)
+        
+        return HttpResponse(json_data)
+
+    return HttpResponseForbidden("Invalid Method")

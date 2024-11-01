@@ -1,11 +1,12 @@
 from flask import Flask
-from flask import request, make_response, render_template
+from flask import request, make_response, render_template, jsonify
 from flask_cors import CORS
 
 import connection_manager
 
 import threading
 import time
+import sqlite3
 
 app = Flask(__name__)
 CORS(app, origins=["http://127.0.0.1:8000/"])
@@ -21,20 +22,26 @@ def init():
         manager_thread.start()
         return make_response(render_template("init.html"), 200)
        
-@app.route("/all_conn", methods=["GET"])
-def get_conn():
-    data = []
-    for conn in connection_manager.ACTIVE_CONNECTIONS:
-        data.append(str(conn.addr[0])+conn.machine_info)
-    return render_template("data.html", data=data)
+@app.route("/conn_all", methods=["GET"])
+def conn_update():
+    connection_manager.manage_connection_status()
 
-@app.route("/exec_conn", methods=["POST"])
-def exec_conn():
+    # Send connection data to the Django server
+    data = {}
+    for ip in connection_manager.ACTIVE_CONNECTIONS.keys():
+        machine_inf = connection_manager.process_machine_info(connection_manager.ACTIVE_CONNECTIONS[ip].machine_info)
+        machine_inf["Status"] = connection_manager.ACTIVE_CONNECTIONS[ip].status
+        data[ip] = machine_inf
+
+    return jsonify(data)
+
+@app.route("/conn_execute", methods=["POST"])
+def conn_execute():
     if request.method == "POST":
-        connection_id = int(request.form.get("id"))
+        ip = int(request.form.get("ip"))
         command = request.form.get("command")
 
-        response = connection_manager.execute_command(id=connection_id, command=command)
+        response = connection_manager.execute_command(id=ip, command=command)
         """        
         execute_command_thread = threading.Thread(target=connection_manager.execute_command, args=(connection_id, command))
         execute_command_thread.start()

