@@ -86,7 +86,7 @@ background-color:  rgb(141, 150, 155);
     font-size: 20px;
     margin: 20px;
     padding: 20px;
-    height: 200px;
+    height: 250px;
     width: 200px;
 }
 .card:hover {
@@ -100,7 +100,7 @@ background-color:  rgb(141, 150, 155);
 .os{
     font-family: 'Verdana';
     font-size: smaller;
-    font-weight: lighter;
+    color:#3e3939;
 }
 .status{
     font-family: 'Verdana';
@@ -108,7 +108,7 @@ background-color:  rgb(141, 150, 155);
     font-weight: lighter;
 }
 .interact{
-    margin-top:15%;
+    margin-top: 10%;
     background-color: transparent;
     padding: 6%;
     border: 1px solid black;

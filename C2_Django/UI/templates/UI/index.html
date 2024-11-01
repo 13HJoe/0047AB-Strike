@@ -26,119 +26,24 @@
   <!--BODY-->
   <div id="not-header"> 
     <div id="container">
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-      <div class="card">
-        <div class="ip">192.168.1.1</div>
-        <hr>
-        <div class="status"><b>Status</b>: Inactive</div>
-        <hr>
-        <div class="os"><b>OS</b>: Windows -v 11.1.22.3</div>
-        <button class="interact">Interact</button>
-      </div>
-
+      {% for line in data %}
+        <div class="card">
+          <div class="ip">{{line.ip}}</div>
+          <hr>
+          <div class="status"><b>Status</b>: 
+            {% if line.recent_status == "Active" %}
+              <p style="color:greenyellow; display: inline;">Active</p>
+            {% else %}
+              <p style="color:rgb(255, 108, 108); display: inline;">Inactive</p>
+            {% endif %}
+          </div>
+          <hr>
+          <div class="os"><b>OS</b>: {{line.os}} {{line.version}}</div>
+          <br>
+          <div class="os"><b>Network Name</b>: {{line.node_name}}</div>
+          <button class="interact">Interact</button>
+        </div>
+      {% endfor %}
     </div>
   </div>
 </body>

@@ -8,14 +8,17 @@ import json
 from .models import *
 
 # Create your views here.
+
+# restrict to user
 def index(request):
     if not request.user.is_authenticated:
         return redirect('login_template')
     
     # GET all connections from FLASK manager
-
+    data = Connection.objects.all()
     return render(request, "UI/index.html", {
-        "user":request.user.username
+        "user":request.user.username,
+        "data":data
     })
 
 def login_view(request):
@@ -40,7 +43,10 @@ def logout_view(request):
      logout(request)
      return redirect("login_template")
 
+# restrict to user
 def initialize_manager(request):
+    if not request.user.is_authenticated:
+        return redirect("login_template")
     if request.method == "POST":
         ip = request.POST["ip_addr"]
         port = request.POST["port"]
@@ -62,15 +68,35 @@ def initialize_manager(request):
     if request.method == "GET":
         return render(request, "UI/initialize_manager.html")
 
+# not restricted to user
 @csrf_exempt
 def update_conn(request):
     if request.method == "POST":
         data = json.loads(request.body)
-        print(data)
-        print("POST check")
+
+        for ip in data.keys():
+            connection = Connection.objects.filter(ip=ip)
+            # Check to see if IP already exists
+            if not connection:
+                # Create new object
+                connection = Connection(ip=ip, cpu=data[ip]["CPU"],
+                                        node_name=data[ip]["Node Name"],os=data[ip]["OS"],
+                                        version=data[ip]["Version"],
+                                        recent_status=data[ip]["Status"])
+                connection.save()
+            else:
+                connection.update(recent_status=data[ip]["Status"])
+                connection.save()
+                
+            
+
         return HttpResponse("Data Received")
 
+# restrict to user
 def refresh_conn(request):
+    if not request.user.is_authenticated:
+        return redirect("login_template")
+    
     if request.method == "GET":
 
         if not request.session['FLASK_SERVER']:
@@ -78,7 +104,21 @@ def refresh_conn(request):
         
         url = request.session['FLASK_SERVER'] + "/conn_all"
         json_data = requests.get(url)
+        data = json.loads(json_data)
         
-        return HttpResponse(json_data)
+        for ip in data.keys():
+            connection = Connection.objects.filter(ip=ip)
+            # Check to see if IP already exists
+            if not connection:
+                # Create new object
+                connection = Connection(ip=ip, cpu=data[ip]["CPU"],
+                                        node_name=data[ip]["Node Name"],os=data[ip]["OS"],
+                                        version=data[ip]["Version"],
+                                        recent_status=data[ip]["Status"])
+            else:
+                connection.recent_status = data[ip]["Status"]
+                
+            connection.save()
+
 
     return HttpResponseForbidden("Invalid Method")

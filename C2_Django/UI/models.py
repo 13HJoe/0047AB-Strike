@@ -1,11 +1,16 @@
 from django.db import models
 
 # Create your models here.
-class Response(models.Model):
-    id = models.AutoField(primary_key=True)
-    response = models.CharField(max_length=1024)
-
 class Connection(models.Model):
     ip = models.CharField(primary_key=True, max_length=256)
-    command_history = models.CharField(max_length=512)
-    response_id = models.OneToOneField(Response, on_delete=models.CASCADE)
+    cpu = models.CharField(max_length=128)
+    node_name = models.CharField(max_length=64)
+    os = models.CharField(max_length=64)
+    version = models.CharField(max_length=64)
+    recent_status = models.CharField(max_length=16)
+    
+class CommandHistory(models.Model):
+    id = models.AutoField(primary_key=True)
+    command = models.CharField(max_length=512)
+    response = models.CharField(max_length=1024)
+    ip = models.ForeignKey(Connection, on_delete=models.CASCADE)
