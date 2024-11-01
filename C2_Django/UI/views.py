@@ -86,7 +86,6 @@ def update_conn(request):
                 connection.save()
             else:
                 connection.update(recent_status=data[ip]["Status"])
-                connection.save()
                 
             
 
@@ -103,8 +102,8 @@ def refresh_conn(request):
             return HttpResponse("Flask API/Manager not initialized")
         
         url = request.session['FLASK_SERVER'] + "/conn_all"
-        json_data = requests.get(url)
-        data = json.loads(json_data)
+        response = requests.get(url)
+        data = response.json()
         
         for ip in data.keys():
             connection = Connection.objects.filter(ip=ip)
@@ -115,10 +114,11 @@ def refresh_conn(request):
                                         node_name=data[ip]["Node Name"],os=data[ip]["OS"],
                                         version=data[ip]["Version"],
                                         recent_status=data[ip]["Status"])
+                connection.save()
             else:
-                connection.recent_status = data[ip]["Status"]
+                connection.update(recent_status=data[ip]["Status"])
+
+        return redirect("index")
                 
-            connection.save()
-
-
+        
     return HttpResponseForbidden("Invalid Method")

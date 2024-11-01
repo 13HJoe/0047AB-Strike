@@ -110,7 +110,7 @@ class Server:
             except:
                 pass
             
-            time.sleep(10)
+            time.sleep(20)
 
 def execute_command(ip, command):
     obj = ACTIVE_CONNECTIONS[ip]
