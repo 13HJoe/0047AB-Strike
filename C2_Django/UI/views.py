@@ -111,10 +111,13 @@ def exec_conn(request, ip):
             "ip":ip,
             "command":command
         }
-        response = requests.post(url, data)
+        response = requests.get(url,params= data)
+
+
+        data = Connection.objects.filter(ip=ip)
         return render(request, "UI/interact.html", {
             "data":data,
-            "response":response.text
+            "response":response.content.decode()
         })
 
         
