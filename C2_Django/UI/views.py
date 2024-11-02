@@ -91,6 +91,36 @@ def update_conn(request):
 
         return HttpResponse("Data Received")
 
+def exec_conn(request, ip):
+    
+    if request.method == "GET":
+        data = Connection.objects.filter(ip=ip)
+        return render(request,"UI/interact.html", {
+            "data":data
+        })
+        pass
+
+    if request.method == "POST":
+        command = request.POST["command"]
+        ip = request.POST["ip"]
+        if not request.session['FLASK_SERVER']:
+            return HttpResponse("Flask API/Manager not initialized")
+        
+        url = request.session['FLASK_SERVER'] + '/conn_execute'
+        data = {
+            "ip":ip,
+            "command":command
+        }
+        response = requests.post(url, data)
+        return render(request, "UI/interact.html", {
+            "data":data,
+            "response":response.text
+        })
+
+        
+
+    return HttpResponseForbidden("Invalid")    
+
 # restrict to user
 def refresh_conn(request):
     if not request.user.is_authenticated:

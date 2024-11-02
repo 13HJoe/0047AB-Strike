@@ -8,5 +8,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name="logout_template"),
     path('initialize_manager', views.initialize_manager, name="initialize_manager_template"),
     path('update_conn', views.update_conn, name="update_conn"),
-    path('refresh_conn', views.refresh_conn, name="refresh_conn")
+    path('refresh_conn', views.refresh_conn, name="refresh_conn"),
+    path('exec_conn/<ip>', views.exec_conn, name="exec_conn"),
+
 ]

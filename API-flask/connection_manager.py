@@ -78,6 +78,7 @@ class Server:
         self.django_server = django_server
 
     def manage_listen_and_add(self):
+        time.sleep(1)
         self.socket_obj.listen(5)
         while True:
             client_conn_object, addr = self.socket_obj.accept()
@@ -116,6 +117,7 @@ def execute_command(ip, command):
     obj = ACTIVE_CONNECTIONS[ip]
     command = command.split()
 
+    print(obj.machine_info)
     if command[0] == "exit":
         obj.json_send("exit")
         del ACTIVE_CONNECTIONS[ip]
@@ -144,6 +146,7 @@ def execute_command(ip, command):
 def run_manager(ip, port, django_server):
     obj = Server(ip=ip, port=port,
                  django_server=django_server)
+    time.sleep(2)
     
     listen_thread = threading.Thread(target=obj.manage_listen_and_add, daemon=True)
     update_thread = threading.Thread(target=obj.manage_update_connection_db, daemon=True)

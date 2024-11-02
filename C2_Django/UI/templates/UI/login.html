@@ -7,25 +7,25 @@
     <link rel="stylesheet" href="../../static/css/style.css">
     <script src="../../static/js/source.js"></script>
 </head>
-<body>
+<body id="loginbody">
   <!--HEADER-->
-  <div class="navbar">
-    <img src="../../static/images/logo.png" height="120" width="340">
+  <div id="loginnavbar">
+    <img src="../../static/images/logo.png" class="transparent-image"  height="120" width="340">
   </div>
 
     <!--BODY-->
-    <div id="not-header"> 
-        <div id="container">
-          <div class="card">
-            <form method="post">
-                {% csrf_token %}
-                <input class="input" type="text" name="username" placeholder="User Name"><br>
-                <input class="input" type="password" name="password" placeholder="Password"><br>
-                <hr>
-                <button id="login_button" type="submit">Log In</button>
-            </form>        
-          </div>
-      </div>
+    <div id="login_container">
+        <div class="login_card">
+          <form method="post">
+              {% csrf_token %}
+              <br><br><br><br><br>
+              <input style="font-family: Courier New;"  class="input" type="text" name="username" placeholder="User Name"><br><br>
+              <input style="font-family: Courier New;"  class="input" type="password" name="password" placeholder="Password"><hr>
+              
+              <button id="login_button" type="submit">Log In</button>
+          </form>        
+        </div>
+    </div>
     
 </body>
 </html>

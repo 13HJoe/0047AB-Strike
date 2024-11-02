@@ -7,6 +7,7 @@ import connection_manager
 import threading
 import time
 import sqlite3
+from queue import Queue
 
 app = Flask(__name__)
 CORS(app, origins=["http://127.0.0.1:8000/"])
@@ -38,18 +39,20 @@ def conn_update():
 @app.route("/conn_execute", methods=["POST"])
 def conn_execute():
     if request.method == "POST":
-        ip = int(request.form.get("ip"))
+        ip = request.form.get("ip")
         command = request.form.get("command")
+        print("POST check")
 
-        response = connection_manager.execute_command(id=ip, command=command)
-        """        
-        execute_command_thread = threading.Thread(target=connection_manager.execute_command, args=(connection_id, command))
-        execute_command_thread.start()
-        execute_command_thread.join()
+        queue = Queue()
+        def command_execution():
+            response = connection_manager.execute_command(ip, command)
+            queue.put(f"Command executed. Response: {response}")
 
-        response = connection_manager.RESPONSE_DIRECTORY[connection_id]
-        """
-        return make_response(render_template("data.html", data=response), 200)
+        execute_thread = threading.Thread(target=command_execution, daemon=True)
+        execute_thread.start()
+
+        response = queue.get()
+        return render_template("data.html", data=response)
 
 def run_flask():
     app.run(debug=True, use_reloader=False,host="127.0.0.1", port=5000)
@@ -57,6 +60,8 @@ def run_flask():
 if __name__ == '__main__':
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
-    flask_thread.join()
+      # Wait briefly to ensure the Flask server starts before other operations
+    
     if manager_thread:
         manager_thread.join()
+    flask_thread.join()

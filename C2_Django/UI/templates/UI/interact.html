@@ -12,14 +12,8 @@
   <div class="navbar">
     <img src="../../static/images/logo.png" height="120" width="340">
     <div class="dropdown">
-      <button class="dropbtn">Actions
-        <i class="fa fa-caret-down"></i>
-      </button>
-      <div class="dropdown-content">
-        <a href="/refresh_conn">DB Refresh</a>
-        <a href="/initialize_manager">Configuration</a>
-        <a href="/logout">Log Out</a>
-      </div>
+      <a href="/" class="dropbtn">Back</a>
+      
     </div>
   </div>
 
@@ -41,12 +35,17 @@
           <div class="os"><b>OS</b>: {{line.os}} {{line.version}}</div>
           <br>
           <div class="os"><b>Network Name</b>: {{line.node_name}}</div>
-          <a href="/exec_conn/{{line.ip}}">
-            <button type="submit" class="interact">Interact</button>
-          </a>
-            
         </div>
+        <form action="/exec_conn/{{line.ip}}" method="post">
+          {% csrf_token %}
+          <input type="text" name="command" placeholder="command">
+          <input type="hidden" name="ip" value="{{line.ip}}">
+          <button type="submit">Enter</button>
+        </form>  
       {% endfor %}
+      {% if response %}
+      <p>{{response}}</p>
+      {% endif %}
     </div>
   </div>
 </body>
