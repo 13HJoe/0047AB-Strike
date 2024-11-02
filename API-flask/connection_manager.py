@@ -35,6 +35,7 @@ class Con_Stor():
                 data[i] = word.decode('utf-8')
         
         json_data = json.dumps(data).encode('utf-8')
+        print(json_data)
         self.client_socket_object.send(json_data)
 
     def json_receive(self):
@@ -63,9 +64,9 @@ def manage_connection_status():
     for ip in ACTIVE_CONNECTIONS.keys():
         obj =  ACTIVE_CONNECTIONS[ip]
         if obj.status == "Active":
-            sock_obj = obj.client_socket_object
             try:
-                sock_obj.send("test".encode("ascii"))
+                obj.json_send("test")
+                resp = obj.json_receive()
             except ConnectionError:
                 obj.status = "Inactive"
 
@@ -78,7 +79,6 @@ class Server:
         self.django_server = django_server
 
     def manage_listen_and_add(self):
-        time.sleep(1)
         self.socket_obj.listen(5)
         while True:
             client_conn_object, addr = self.socket_obj.accept()
@@ -95,6 +95,7 @@ class Server:
     def manage_update_connection_db(self):
         while True:
             # Update connection status
+            time.sleep(20)
             manage_connection_status()
 
             # Send connection data to the Django server
@@ -106,20 +107,18 @@ class Server:
             url = f"{self.django_server}/update_conn"
             print(data)
             try:
-                r = requests.post(url=url,json=data)
+                r = requests.post(url=url,json=data, timeout=0.5)
                 print(r.status_code," STATUS CHECK")
             except:
                 pass
-            
-            time.sleep(20)
 
 def execute_command(ip, command):
     obj = ACTIVE_CONNECTIONS[ip]
     command = command.split()
 
-    print(obj.machine_info)
+    print(ip, command)
     if command[0] == "exit":
-        obj.json_send("exit")
+        obj.json_send(command)
         del ACTIVE_CONNECTIONS[ip]
         #RESPONSE_DIRECTORY[id] = "Closed Connection"
         return "Closed Connection"
@@ -129,7 +128,7 @@ def execute_command(ip, command):
         filename = command[1]
         data = obj.read_file(filename)
         command.append(data)
-        
+
     obj.json_send(command)
     response = obj.json_receive()
 
@@ -142,19 +141,3 @@ def execute_command(ip, command):
     else:
         #RESPONSE_DIRECTORY[id] = response
         return response
-
-def run_manager(ip, port, django_server):
-    obj = Server(ip=ip, port=port,
-                 django_server=django_server)
-    time.sleep(2)
-    
-    listen_thread = threading.Thread(target=obj.manage_listen_and_add, daemon=True)
-    update_thread = threading.Thread(target=obj.manage_update_connection_db, daemon=True)
-
-    listen_thread.start()
-    update_thread.start()
-
-    listen_thread.join()
-    update_thread.join()
-
-    obj.socket_obj.close()

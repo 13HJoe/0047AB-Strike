@@ -7,20 +7,16 @@ import connection_manager
 import threading
 import time
 import sqlite3
+import socket
 from queue import Queue
 
 app = Flask(__name__)
 CORS(app, origins=["http://127.0.0.1:8000/"])
-manager_thread = None
 
 @app.route("/init", methods=["GET"])
 def init():
     if request.method == "GET":
-        ip = request.args.get("ip")
-        port = int(request.args.get("port"))
-        django_server = request.args.get("django-server")
-        manager_thread = threading.Thread(target=connection_manager.run_manager, args=(ip, port, django_server),daemon=True)
-        manager_thread.start()
+
         return make_response(render_template("init.html"), 200)
        
 @app.route("/conn_all", methods=["GET"])
@@ -36,32 +32,55 @@ def conn_update():
 
     return jsonify(data)
 
-@app.route("/conn_execute", methods=["POST"])
+@app.route("/conn_execute", methods=["GET"])
 def conn_execute():
-    if request.method == "POST":
-        ip = request.form.get("ip")
-        command = request.form.get("command")
-        print("POST check")
+    if request.method == "GET":
+        ip = request.args.get("ip")
+        command = request.args.get("command")
 
-        queue = Queue()
-        def command_execution():
-            response = connection_manager.execute_command(ip, command)
-            queue.put(f"Command executed. Response: {response}")
+        response = connection_manager.execute_command(ip, command)
 
-        execute_thread = threading.Thread(target=command_execution, daemon=True)
-        execute_thread.start()
-
-        response = queue.get()
         return render_template("data.html", data=response)
 
 def run_flask():
     app.run(debug=True, use_reloader=False,host="127.0.0.1", port=5000)
 
-if __name__ == '__main__':
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-      # Wait briefly to ensure the Flask server starts before other operations
+NUMBER_OF_THREADS = 3
+JOB_NUMBERS = [1, 2, 3]
+queue = Queue()
+
+if __name__ == '__main__':    
+    ip = socket.gethostname()
+    port = 4444
+    django_server = "http://127.0.0.1:8000"
+
+    obj = connection_manager.Server(ip=ip, port=port, django_server=django_server)
+
+    def create_workers():
+        for _ in range(NUMBER_OF_THREADS):
+            t = threading.Thread(target=work)
+            t.daemon = True
+            t.start()
+
+    def work():
+        while True:
+            x = queue.get()
+            if x == 1:
+                run_flask()
+            if x == 2:
+                obj.manage_listen_and_add()
+            if x == 3:
+                obj.manage_update_connection_db()
     
-    if manager_thread:
-        manager_thread.join()
-    flask_thread.join()
+    def create_jobs():
+        for x in JOB_NUMBERS:
+            queue.put(x)
+        
+        queue.join()
+
+    create_workers()
+    create_jobs()
+    
+
+    obj.socket_obj.close()
+    
