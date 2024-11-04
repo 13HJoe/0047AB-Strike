@@ -22,7 +22,7 @@
     <div id="container">
       {% for line in data %}
         <div class="card">
-          <div class="ip">{{line.ip}}</div>
+          <div id='ip' class="ip">{{line.ip}}</div>
           <hr>
           <div class="status"><b>Status</b>: 
             {% if line.recent_status == "Active" %}
@@ -47,6 +47,8 @@
       <p id="response">{{response}}</p>
       {% endif %}
     </div>
+    <button onclick=gethistory() type="submit">Get Command History</button>
+    <div class="resp"></div>
   </div>
 </body>
 </html>
