@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 import requests
 import json
+import datetime
 
 from .models import *
 
@@ -91,6 +93,7 @@ def update_conn(request):
 
         return HttpResponse("Data Received")
 
+@login_required
 def exec_conn(request, ip):
     
     if request.method == "GET":
@@ -103,6 +106,7 @@ def exec_conn(request, ip):
     if request.method == "POST":
         command = request.POST["command"]
         ip = request.POST["ip"]
+        
         if not request.session['FLASK_SERVER']:
             return HttpResponse("Flask API/Manager not initialized")
         
@@ -113,16 +117,36 @@ def exec_conn(request, ip):
         }
         response = requests.get(url,params= data)
 
+        hist_obj = CommandHistory(ip=Connection.objects.get(ip=ip), time=str(datetime.datetime.today()),
+                                  command=command,
+                                  response = response.content.decode())
+        hist_obj.save()
 
         data = Connection.objects.filter(ip=ip)
         return render(request, "UI/interact.html", {
             "data":data,
             "response":response.content.decode()
         })
-
+    
         
 
     return HttpResponseForbidden("Invalid")    
+
+def exec_hist(request):
+    if request.method == "GET":
+        ip = request.GET.get("ip")
+        objects = CommandHistory.objects.filter(ip=ip)
+
+        resp = {}
+        for obj in objects.all():
+            resp[obj.time] = {
+                "command":obj.command,
+                "response":obj.response
+            }
+
+        return JsonResponse(resp)
+        
+
 
 # restrict to user
 def refresh_conn(request):

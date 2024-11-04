@@ -11,6 +11,8 @@ class Connection(models.Model):
     
 class CommandHistory(models.Model):
     id = models.AutoField(primary_key=True)
+    time = models.CharField(max_length=30)
+    ip = models.ForeignKey(Connection, on_delete=models.CASCADE)
     command = models.CharField(max_length=512)
     response = models.CharField(max_length=1024)
-    ip = models.ForeignKey(Connection, on_delete=models.CASCADE)
+    
