@@ -74,6 +74,8 @@ background-color:  rgb(141, 150, 155);
 
 #not-header{
     background-color: #ccc8c8;
+    overflow: hidden;
+
 }
 #container {
     display: flex;
@@ -86,8 +88,8 @@ background-color:  rgb(141, 150, 155);
     font-size: 20px;
     margin: 20px;
     padding: 20px;
-    height: 250px;
-    width: 200px;
+    max-height: 30%;
+    width: 20%;
 }
 .card:hover {
     box-shadow: 0px 5px 15px 0.5px rgb(0, 0, 0);
@@ -157,12 +159,13 @@ background-color:  rgb(141, 150, 155);
   }
 
 .response-container {
+    word-wrap: break-word;
     white-space: pre-wrap;
     background-color: black;
     color: #00aa00;
     font-family: monospace;
     padding: 5px;
-    width: 300%;
+    max-width:500%;
 }
 
 /* Wrapper to add the ">" symbol before the input */
@@ -173,7 +176,7 @@ background-color:  rgb(141, 150, 155);
     padding: 10px;
     box-sizing: border-box;
     margin-top: 20px;
-    width: 305.5%;
+    max-width:500%;
 }
 
 /* ">" symbol styled like terminal text */

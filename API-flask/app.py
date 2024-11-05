@@ -40,7 +40,8 @@ def conn_execute():
 
         response = connection_manager.execute_command(ip, command)
 
-        return make_response(response, 200)
+
+        return make_response(response.replace('>',' ').replace('<', ' '), 200)
 
 def run_flask():
     app.run(debug=True, use_reloader=False,host="127.0.0.1", port=5000)

@@ -20,7 +20,7 @@
   <div id="not-header"> 
     <div id="container">
       {% for line in data %}
-        <div class="card">
+        <div class="card" style="height: 200px;">
           <div id="ip" class="ip">{{ line.ip }}</div>
           <hr>
           <div class="status"><b>Status</b>: 
@@ -35,7 +35,7 @@
           <br>
           <div class="os"><b>Network Name</b>: {{ line.node_name }}</div>
         </div>
-        <form action="/exec_conn/{{line.ip}}"  onsubmit="submitCommand(event, '{{ line.ip }}')" method="post">
+        <form action=""  onsubmit="submitCommand(event, '{{ line.ip }}')" method="post">
           {% csrf_token %}
           <div class="terminal-wrapper">
             <input class="terminal-input" type="text" name="command" placeholder="Enter Command">
@@ -46,7 +46,6 @@
         </form>  
       {% endfor %}
     </div>
-    <button onclick="gethistory()" type="button">Get Command History</button>
     <br>
   </div>
 

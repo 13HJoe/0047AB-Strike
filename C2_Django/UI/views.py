@@ -95,8 +95,10 @@ def update_conn(request):
 
         return HttpResponse("Data Received")
 
-@login_required
 def exec_conn(request, ip):
+
+    if not request.user.is_authenticated:
+        return redirect('login_template')
     
     if request.method == "GET":
         data = Connection.objects.filter(ip=ip)
@@ -129,10 +131,7 @@ def exec_conn(request, ip):
         hist_obj.save()
 
         data = Connection.objects.filter(ip=ip)
-        return render(request, "UI/interact.html", {
-            "data":data,
-            "response":response.content.decode()
-        })
+        return HttpResponse(response.content.decode())
     
         
 
@@ -141,7 +140,7 @@ def exec_conn(request, ip):
 def exec_hist(request):
     if request.method == "GET":
         ip = request.GET.get("ip")
-        objects = CommandHistory.objects.filter(ip=ip)
+        objects = CommandHistory.objects.filter(ip=ip).order_by('-time')
 
         resp = {}
         for obj in objects.all():
