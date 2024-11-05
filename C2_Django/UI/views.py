@@ -13,6 +13,7 @@ from .models import *
 
 # restrict to user
 def index(request):
+    request.session['FLASK_SERVER'] = 'http://127.0.0.1:5000/'
     if not request.user.is_authenticated:
         return redirect('login_template')
     
@@ -43,6 +44,7 @@ def login_view(request):
 
 def logout_view(request):
      logout(request)
+     
      return redirect("login_template")
 
 # restrict to user
