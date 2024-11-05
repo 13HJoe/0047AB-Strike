@@ -50,7 +50,7 @@ JOB_NUMBERS = [1, 2, 3]
 queue = Queue()
 
 if __name__ == '__main__':    
-    ip = "10.124.11.89"
+    ip = socket.gethostname()
     port = 4444
     django_server = "http://127.0.0.1:8000"
 

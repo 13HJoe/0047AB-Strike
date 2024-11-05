@@ -117,6 +117,10 @@ def exec_conn(request, ip):
         }
         response = requests.get(url,params= data)
 
+        if response.content.decode() == "Connection Pipe Broken":
+            Connection.objects.filter(ip=ip).update(recent_status="Inactive")
+            return redirect("index")
+
         hist_obj = CommandHistory(ip=Connection.objects.get(ip=ip), time=str(datetime.datetime.today()),
                                   command=command,
                                   response = response.content.decode())

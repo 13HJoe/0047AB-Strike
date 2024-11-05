@@ -113,7 +113,10 @@ class Server:
                 pass
 
 def execute_command(ip, command):
-    obj = ACTIVE_CONNECTIONS[ip]
+    try:
+        obj = ACTIVE_CONNECTIONS[ip]
+    except:
+        return "Connection Pipe Broken"
     command = command.split()
 
     print(ip, command)

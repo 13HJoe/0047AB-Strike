@@ -13,7 +13,6 @@
     <img src="../../static/images/logo.png" height="120" width="340">
     <div class="dropdown">
       <a href="/" class="dropbtn">Back</a>
-      
     </div>
   </div>
 
@@ -22,7 +21,7 @@
     <div id="container">
       {% for line in data %}
         <div class="card">
-          <div id='ip' class="ip">{{line.ip}}</div>
+          <div id="ip" class="ip">{{ line.ip }}</div>
           <hr>
           <div class="status"><b>Status</b>: 
             {% if line.recent_status == "Active" %}
@@ -32,23 +31,25 @@
             {% endif %}
           </div>
           <hr>
-          <div class="os"><b>OS</b>: {{line.os}} {{line.version}}</div>
+          <div class="os"><b>OS</b>: {{ line.os }} {{ line.version }}</div>
           <br>
-          <div class="os"><b>Network Name</b>: {{line.node_name}}</div>
+          <div class="os"><b>Network Name</b>: {{ line.node_name }}</div>
         </div>
-        <form action="/exec_conn/{{line.ip}}" method="post">
+        <form action="/exec_conn/{{line.ip}}"  onsubmit="submitCommand(event, '{{ line.ip }}')" method="post">
           {% csrf_token %}
-          <input type="text" name="command" placeholder="command">
-          <input type="hidden" name="ip" value="{{line.ip}}">
-          <button type="submit">Enter</button>
+          <div class="terminal-wrapper">
+            <input class="terminal-input" type="text" name="command" placeholder="Enter Command">
+            <input type="hidden" name="ip" value="{{ line.ip }}" autocomplete="">
+            <button type="submit" hidden></button>  
+          </div>
+          <div class="response-container" id="response-{{ line.ip }}">{{response}}</div>
         </form>  
       {% endfor %}
-      {% if response %}
-      <p id="response">{{response}}</p>
-      {% endif %}
     </div>
-    <button onclick=gethistory() type="submit">Get Command History</button>
-    <div class="resp"></div>
+    <button onclick="gethistory()" type="button">Get Command History</button>
+    <br>
   </div>
+
+ 
 </body>
 </html>
