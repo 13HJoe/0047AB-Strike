@@ -90,9 +90,11 @@ def update_conn(request):
                 connection.save()
             else:
                 connection.update(recent_status=data[ip]["Status"])
-                
-            
+        
 
+        objects = Connection.objects.exclude(ip__in = data.keys())
+        objects.update(recent_status="Inactive")
+            
         return HttpResponse("Data Received")
 
 def exec_conn(request, ip):
@@ -164,8 +166,16 @@ def refresh_conn(request):
             return HttpResponse("Flask API/Manager not initialized")
         
         url = request.session['FLASK_SERVER'] + "/conn_all"
-        response = requests.get(url)
-        data = response.json()
+        data = None
+        try:
+            response = requests.get(url)
+            data = response.json()
+        except:
+            pass
+
+        if not data:
+            data = {}
+        
         
         for ip in data.keys():
             connection = Connection.objects.filter(ip=ip)
@@ -179,6 +189,11 @@ def refresh_conn(request):
                 connection.save()
             else:
                 connection.update(recent_status=data[ip]["Status"])
+
+
+        objects = Connection.objects.exclude(ip__in = data.keys())
+        objects.update(recent_status="Inactive")
+
 
         return redirect("index")
                 

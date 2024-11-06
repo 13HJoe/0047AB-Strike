@@ -35,7 +35,6 @@ class Con_Stor():
                 data[i] = word.decode('utf-8')
         
         json_data = json.dumps(data).encode('utf-8')
-        print(json_data)
         self.client_socket_object.send(json_data)
 
     def json_receive(self):
@@ -105,10 +104,8 @@ class Server:
                 machine_inf["Status"] = ACTIVE_CONNECTIONS[ip].status
                 data[ip] = machine_inf
             url = f"{self.django_server}/update_conn"
-            print(data)
             try:
                 r = requests.post(url=url,json=data, timeout=0.5)
-                print(r.status_code," STATUS CHECK")
             except:
                 pass
 
@@ -119,10 +116,9 @@ def execute_command(ip, command):
         return "Connection Pipe Broken"
     command = command.split()
 
-    print(ip, command)
     if command[0] == "exit":
         obj.json_send(command)
-        del ACTIVE_CONNECTIONS[ip]
+        ACTIVE_CONNECTIONS[ip].status = "Inactive"
         #RESPONSE_DIRECTORY[id] = "Closed Connection"
         return "Closed Connection"
 
@@ -137,10 +133,12 @@ def execute_command(ip, command):
 
     if command[0] == "download":
         data = response
-        filename = command[1].split('/')[-1]
+        filename = ' '.join(command[1:])
+        filename = filename.split('/')[-1]
         obj.write_file(filename, response)
+        print(f'response - {response}')
         #RESPONSE_DIRECTORY[id] =  "File Downloaded"
-        return "Closed Connection"
+        return "File Downloaded"
     else:
         #RESPONSE_DIRECTORY[id] = response
         return response
