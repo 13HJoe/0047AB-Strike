@@ -93,6 +93,7 @@ def update_conn(request):
         
 
         objects = Connection.objects.exclude(ip__in = data.keys())
+
         objects.update(recent_status="Inactive")
             
         return HttpResponse("Data Received")

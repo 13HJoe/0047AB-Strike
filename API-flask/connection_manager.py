@@ -45,7 +45,7 @@ class Con_Stor():
                 json_data += page.decode('utf-8')
                 return json.loads(json_data)
             except:
-                continue
+                continue        
             
 ACTIVE_CONNECTIONS = {}
 
@@ -66,7 +66,7 @@ def manage_connection_status():
             try:
                 obj.json_send("test")
                 resp = obj.json_receive()
-            except ConnectionError:
+            except:
                 obj.status = "Inactive"
 
 
