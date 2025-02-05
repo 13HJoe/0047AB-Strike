@@ -210,11 +210,13 @@ def dns_tunnelled_data_handler(request):
         dns_response_object= DNS_Response.objects.filter(ip=ip)
         
         if not dns_response_object:
-            dns_response_object = DNS_Response(ip=ip, data=data)
+            dns_response_object = DNS_Response(ip=ip, dns_response_data=data)
             dns_response_object.save()
         else:
             concatenated_data = dns_response_object.get(ip=ip).dns_response_data + data
             dns_response_object.update(dns_response_data = concatenated_data)
+        
+        return HttpResponse("Updated DB")
             
     else:
         return HttpResponseForbidden("Invalid Method")

