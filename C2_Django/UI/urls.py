@@ -11,5 +11,5 @@ urlpatterns = [
     path('refresh_conn', views.refresh_conn, name="refresh_conn"),
     path('exec_hist', views.exec_hist, name="exec_hist"),
     path('exec_conn/<ip>', views.exec_conn, name="exec_conn"),
-
+    path('dns_tun', views.dns_tunnelled_data_handler, name="dns_tun"),
 ]

