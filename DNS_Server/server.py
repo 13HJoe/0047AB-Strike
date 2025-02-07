@@ -17,8 +17,8 @@ DJANGO_SERVER = "http://127.0.0.1:8000"
 BUFFER = {}
 
 def write_to_disk(ip):
-    base64_encoded_data = BUFFER[ip]
-    data = base64.b64decode(base64_encoded_data)
+    base32_encoded_data = BUFFER[ip]
+    data = base64.b32encode(base32_encoded_data)
     with open('tmp001', 'wb') as obj:
         obj.write(data)
     BUFFER.pop(ip)
@@ -52,6 +52,7 @@ class DNSHandler(socketserver.BaseRequestHandler):
         data = self.request[0].strip()
         socket = self.request[1]
         try:
+            print(data)
             request = DNSRecord.parse(data)
             # Main DNS class (DNSRecord) - corresponds to DNS packet & comprises DNSHeader
             reply = DNSRecord(DNSHeader(id=request.header.id,
@@ -63,7 +64,7 @@ class DNSHandler(socketserver.BaseRequestHandler):
             tunnelled_data = qname.split('.')[0]
             print(tunnelled_data)
             try:
-                if base64.b64decode(tunnelled_data).decode() == "#END#":
+                if base64.b32encode(tunnelled_data) == b"#END#":
                     write_to_disk(self.client_address[0])
             except Exception as e:
                 pass
