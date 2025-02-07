@@ -24,7 +24,7 @@ import socket
 import base64
 
 
-dns_server = '192.168.57.54'
+dns_server = '10.121.100.63'
 domain_name = 'southpark.com'
 data = 'shithousery'
 
@@ -39,4 +39,3 @@ dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 dns_socket.sendto(query.pack(), (dns_server, 53))
 
 response = dnslib.DNSRecord.parse(dns_socket.recv(4096))
-print(response)
