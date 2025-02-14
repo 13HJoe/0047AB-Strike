@@ -1,11 +1,10 @@
-import socket, glob, json
+import socket, glob, json, base64
 
 # note: only serve requests it has zone files for, 
 # don't serve requests for domain names not found in /zones
 ZONE_DATA = {}
 
 DATA_BUFFER = {}
-IP_BUFFER = {}
 
 class DNS_Handler:
     def __init__(self, data, client_address):
@@ -13,8 +12,38 @@ class DNS_Handler:
         self.client_address = client_address
 
     def DNS_Tunnel(self):
-        pass
+        tunnelled_data = self.domain_name[0]
+        raw_data = base64.b32decode(tunnelled_data)
+        if b'#FILE#' in raw_data:
+            file_name = str(raw_data).split()[1].strip("'") 
+            key = self.client_address[0]
+            DATA_BUFFER[key] = [file_name, b'']
+        elif b'#END#' in raw_data:
+            file_name = DATA_BUFFER[self.client_address[0]][0]
+            with open("downloads/"+file_name, 'wb') as obj:
+                obj.write(DATA_BUFFER[self.client_address[0]][1])
+            DATA_BUFFER.pop(self.client_address[0])
+        else:
+            DATA_BUFFER[self.client_address[0]][1] += raw_data
+        
+    # build -> used in HEADER, BODY, QUESTION
+    def DNS_Get_Zone(self, domain_parts):
+        global ZONE_DATA
+        zone_name = '.'.join(domain_parts[1:]) # ignore tunnelled data in subdomain
+        return ZONE_DATA[zone_name]
 
+    def DNS_Get_Records(self):
+        domain_parts, QTYPE = self.DNS_Get_Question()
+        
+        if QTYPE == b"\x00\x01":
+            QTYPE = 'a'
+        
+        zone = self.DNS_Get_Zone(domain_parts)
+
+        return (zone[QTYPE], QTYPE, domain_parts)
+
+
+    # build -> HEADER
     def DNS_Get_Flags(self):
         temp_buf = self.data[2:4]
         byte_1 = bytes(temp_buf[:1])
@@ -57,10 +86,84 @@ class DNS_Handler:
 
     def DNS_Get_Question(self):
         temp_buf = self.data[12:]
-        
+        state = 0
+        expected_length = 0
+        domain_string = ''
+        x = 0
+        y = 0
+        domain_parts = []
+        for byte in temp_buf:
+            if state == 1:
+                if byte!=0:
+                    domain_string += chr(byte) # each character in domain -> 1 byte
+                x += 1
+                if x == expected_length:
+                    domain_parts.append(domain_string)
+                    domain_string = ''
+                    state, x = 0, 0
+                if byte == 0:
+                    domain_parts.append(domain_string)
+                    break
+            else:
+                state = 1
+                expected_length  = byte
+            y += 1
 
-    def DNS_Get_Records(self):
-        domain, QTYPE = self.DNS_Get_Question()
+        QTYPE = temp_buf[y:y+2]
+        return (domain_parts, QTYPE)
+
+    # build -> QUESTION
+    def DNS_Build_Question(self):
+        qbytes = b''
+        # build QNAME
+        for part in self.domain_name:
+            length = len(part)
+            qbytes += bytes([length])
+            for char in part:
+                qbytes += ord(char).to_bytes(1, byteorder='big')
+        # build QTYPE
+        if self.rectype == 'a':
+            qbytes += (1).to_bytes(2, byteorder='big')
+        # build QCLASS
+        qbytes += (1).to_bytes(2, byteorder='big')
+        return qbytes
+    
+    # build -> BODY
+    def DNS_Record_to_Bytes(self, recttl, recval):
+        '''
+                                        1  1  1  1  1  1
+          0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                                               |
+        /                                               /
+        /                      NAME                     /
+        |                                               |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                      TYPE                     |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                     CLASS                     |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                      TTL                      |
+        |                                               |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+        |                   RDLENGTH                    |
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--|
+        /                     RDATA                     /
+        /                                               /
+        +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+
+        '''
+        rbytes = b'\xc0\x0c'
+        if self.rectype == 'a':
+            rbytes += bytes([0]) + bytes([1])
+        rbytes += bytes([0]) + bytes([1])
+        rbytes += int(recttl).to_bytes(4, byteorder='big')
+        if self.rectype == 'a':
+            rbytes += bytes([0]) + bytes([4])
+            for part in recval.split('.'):
+                rbytes += bytes([int(part)])
+        return rbytes
+
 
     '''
     https://www.ietf.org/rfc/rfc1035.txt
@@ -82,7 +185,6 @@ class DNS_Handler:
     +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
     '''
-
     def DNS_Generate_Response(self):
         # Transaction ID - the client can match the received answer 
         # with the question that it sent
@@ -93,12 +195,27 @@ class DNS_Handler:
         # Question Count
         QDCOUNT = b'\x00\x01' # Usually 1
 
-        records, rectype, domain_name = self.DNS_Get_Records()
+        self.records, self.rectype, self.domain_name = self.DNS_Get_Records()
+        self.DNS_Tunnel()
+        
         # Answer Count
+        ANCOUNT = len(self.records).to_bytes(2, byteorder='big')
 
-        ANCOUNT = None
+        # Nameserver Count
+        NSCOUNT = (0).to_bytes(2, byteorder='big')
 
+        # Additional Count
+        ARCOUNT = (0).to_bytes(2, byteorder='big')
 
+        DNS_HEADER = Transaction_ID + flags + QDCOUNT + ANCOUNT + NSCOUNT + ARCOUNT
+
+        DNS_QUESTION = self.DNS_Build_Question()
+
+        DNS_BODY = b''
+        for record in self.records:
+            DNS_BODY += self.DNS_Record_to_Bytes(record['ttl'], record['value'])
+        
+        return DNS_HEADER + DNS_QUESTION + DNS_BODY
 
 class DNS_Server:
     def __init__(self, IP, PORT):

