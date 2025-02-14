@@ -1,0 +1,10 @@
+{
+    "$origin": "southpark.com.",
+    "$ttl": 3600,
+    "ns": [
+        { "host": "ns1.southpark.com." }
+    ],
+    "a": [
+        {"name":"@", "ttl":3600, "value":"23.156.72.91" }
+    ]
+}

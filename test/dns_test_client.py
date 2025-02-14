@@ -29,7 +29,7 @@ dns_server = '192.168.57.54'
 domain_name = 'southpark.com'
 
 def dns_udp_handle(data):
-        query = dnslib.DNSRecord.question(data + '.' + domain_name)
+        query = dnslib.DNSRecord.question(f"{data}.{domain_name}")
         dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         dns_socket.setblocking(0)
         
