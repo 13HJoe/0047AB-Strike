@@ -122,6 +122,7 @@ def exec_conn(request, ip):
             "ip":ip,
             "command":command
         }
+        
         response = requests.get(url,params= data)
 
         if response.content.decode() == "Connection Pipe Broken":
@@ -201,7 +202,7 @@ def refresh_conn(request):
     return HttpResponseForbidden("Invalid Method")
 
 # not restricted to user
-@csrf_exempt
+'''@csrf_exempt
 def dns_tunnelled_data_handler(request):
     if request.method == "POST":
         ip = request.POST["ip"]
@@ -219,4 +220,4 @@ def dns_tunnelled_data_handler(request):
         return HttpResponse("Updated DB")
             
     else:
-        return HttpResponseForbidden("Invalid Method")
+        return HttpResponseForbidden("Invalid Method")'''

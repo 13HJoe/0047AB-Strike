@@ -15,7 +15,3 @@ class CommandHistory(models.Model):
     ip = models.ForeignKey(Connection, on_delete=models.CASCADE)
     command = models.CharField(max_length=512)
     response = models.TextField()
-
-class DNS_Response(models.Model):
-    ip = models.CharField(primary_key=True, max_length=256)
-    dns_response_data = models.TextField()

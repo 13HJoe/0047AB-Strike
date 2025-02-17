@@ -14,6 +14,7 @@ class DNS_Handler:
     def DNS_Tunnel(self):
         tunnelled_data = self.domain_name[0]
         raw_data = base64.b32decode(tunnelled_data)
+        print(raw_data)
         if b'#FILE#' in raw_data:
             file_name = str(raw_data).split()[1].strip("'") 
             key = self.client_address[0]
@@ -237,6 +238,7 @@ class DNS_Server:
         return json_zone
         
     def run(self):
+        print("[+] DNS Server running")
         self.socket_object = socket.socket(socket.AF_INET, # IPv4
                                       socket.SOCK_DGRAM) # UDP
         self.socket_object.bind((self.IP, self.PORT))
@@ -248,5 +250,5 @@ class DNS_Server:
             self.socket_object.sendto(response, client_address)
 
 
-dns_server_obj = DNS_Server('127.0.0.1', 53)
+dns_server_obj = DNS_Server('10.136.66.98', 53)
 dns_server_obj.run()
