@@ -250,5 +250,5 @@ class DNS_Server:
             self.socket_object.sendto(response, client_address)
 
 
-dns_server_obj = DNS_Server('10.136.66.98', 53)
+dns_server_obj = DNS_Server('192.168.1.41', 53)
 dns_server_obj.run()

